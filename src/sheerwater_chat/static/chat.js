@@ -1,9 +1,48 @@
+import { marked } from 'https://cdn.jsdelivr.net/npm/marked@17/+esm';
+import hljs from 'https://cdn.jsdelivr.net/npm/highlight.js@11/+esm';
+import { markedHighlight } from 'https://cdn.jsdelivr.net/npm/marked-highlight@2/+esm';
+
 const form = document.getElementById('chat-form');
 const input = document.getElementById('message-input');
 const messagesDiv = document.getElementById('messages');
 const sendBtn = document.getElementById('send-btn');
 const newChatBtn = document.getElementById('new-chat');
 const conversationIdInput = document.getElementById('conversation-id');
+
+// Configure marked.js with highlight.js for code syntax highlighting
+marked.use(markedHighlight({
+    langPrefix: 'hljs language-',
+    highlight: function(code, lang) {
+        if (lang && hljs.getLanguage(lang)) {
+            return hljs.highlight(code, { language: lang }).value;
+        }
+        return hljs.highlightAuto(code).value;
+    }
+}));
+
+marked.setOptions({
+    breaks: true,
+    gfm: true
+});
+
+// Render markdown content safely
+function renderMarkdown(content) {
+    try {
+        return marked.parse(content);
+    } catch (e) {
+        console.error('Markdown parse error:', e);
+        return content;
+    }
+}
+
+// Render all existing messages on page load
+document.querySelectorAll('.message-content.needs-render').forEach(el => {
+    const rawContent = el.textContent;
+    if (rawContent) {
+        el.innerHTML = renderMarkdown(rawContent);
+        el.classList.remove('needs-render');
+    }
+});
 
 // Auto-resize textarea
 input.addEventListener('input', () => {
@@ -78,7 +117,11 @@ function addMessage(role, content, loading = false, toolCalls = null) {
 
     const contentDiv = document.createElement('div');
     contentDiv.className = 'message-content';
-    contentDiv.textContent = content;
+    if (loading) {
+        contentDiv.textContent = content;
+    } else {
+        contentDiv.innerHTML = renderMarkdown(content);
+    }
     div.appendChild(contentDiv);
 
     if (toolCalls && toolCalls.length > 0) {

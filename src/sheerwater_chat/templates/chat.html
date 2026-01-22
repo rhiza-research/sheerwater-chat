@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sheerwater Chat</title>
     <link rel="stylesheet" href="/static/style.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/highlight.js@11/styles/github-dark.min.css">
 </head>
 <body>
     <div class="app">
@@ -35,7 +36,7 @@
                 {% endif %}
                 {% for msg in messages %}
                 <div class="message {{ msg.role }}">
-                    <div class="message-content">{{ msg.content }}</div>
+                    <div class="message-content needs-render">{{ msg.content | e }}</div>
                     {% if msg.tool_calls %}
                     <div class="tool-calls">
                         {% for tc in msg.tool_calls %}
@@ -57,6 +58,6 @@
         </main>
     </div>
 
-    <script src="/static/chat.js"></script>
+    <script type="module" src="/static/chat.js"></script>
 </body>
 </html>
