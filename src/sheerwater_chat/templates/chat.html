@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sheerwater Chat</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <div class="app">
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <button id="new-chat" class="new-chat-btn">+ New Chat</button>
+            </div>
+            <nav class="conversations">
+                {% for conv in conversations %}
+                <a href="/c/{{ conv.id }}" class="conversation-item {% if current_conversation and current_conversation.id == conv.id %}active{% endif %}">
+                    {{ conv.title or "New conversation" }}
+                </a>
+                {% endfor %}
+            </nav>
+            <div class="sidebar-footer">
+                <span class="user-name">{{ user_name }}</span>
+                <a href="/logout" class="logout-link">Logout</a>
+            </div>
+        </aside>
+
+        <main class="chat-area">
+            <div class="messages" id="messages">
+                {% if not messages %}
+                <div class="welcome">
+                    <h2>Sheerwater Chat</h2>
+                    <p>Ask questions about weather forecast models and benchmarking.</p>
+                </div>
+                {% endif %}
+                {% for msg in messages %}
+                <div class="message {{ msg.role }}">
+                    <div class="message-content">{{ msg.content }}</div>
+                    {% if msg.tool_calls %}
+                    <div class="tool-calls">
+                        {% for tc in msg.tool_calls %}
+                        <div class="tool-call">
+                            <span class="tool-name">{{ tc.name }}</span>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+
+            <form class="input-area" id="chat-form">
+                <input type="hidden" id="conversation-id" value="{{ current_conversation.id if current_conversation else '' }}">
+                <textarea id="message-input" placeholder="Ask about forecast models..." rows="1"></textarea>
+                <button type="submit" id="send-btn">Send</button>
+            </form>
+        </main>
+    </div>
+
+    <script src="/static/chat.js"></script>
+</body>
+</html>
