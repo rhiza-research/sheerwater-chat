@@ -20,7 +20,7 @@ Set the following environment variables:
 - `MCP_SERVER_URL` - URL of sheerwater-mcp server (default: http://localhost:8000)
 - `ANTHROPIC_API_KEY` - Anthropic API key
 - `SECRET_KEY` - Session secret key
-- `DATABASE_PATH` - SQLite database path (default: sheerwater_chat.db)
+- `DATABASE_URL` - Database URL (default: sqlite:///./sheerwater_chat.db, or postgresql://user:pass@host/db)
 - `BASE_URL` - Application base URL (default: http://localhost:8080)
 
 ## Running
