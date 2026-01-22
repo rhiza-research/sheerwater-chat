@@ -1,0 +1,131 @@
+"""Chat logic with Claude API and MCP tools."""
+
+import logging
+
+import anthropic
+
+from .mcp_client import McpClient
+
+logger = logging.getLogger(__name__)
+
+SYSTEM_PROMPT = """\
+You are a helpful assistant that helps meteorologists and forecasters evaluate and compare \
+weather forecast models. You have access to the Sheerwater benchmarking platform through various tools.
+
+When a user asks about forecast models:
+1. Use the discovery tools to show available models, metrics, and datasets
+2. Use the evaluation tools to compare forecasts against ground truth
+3. Use the visualization tools to generate charts or dashboard links
+
+Be concise and helpful. When presenting data, format it clearly."""
+
+
+class ChatService:
+    """Service for handling chat interactions with Claude and MCP tools."""
+
+    def __init__(self, anthropic_api_key: str, mcp_client: McpClient):
+        self.client = anthropic.Anthropic(api_key=anthropic_api_key)
+        self.mcp_client = mcp_client
+
+    async def send_message(
+        self,
+        messages: list[dict],
+        on_tool_call: callable | None = None,
+    ) -> dict:
+        """
+        Send a message to Claude with MCP tools available.
+
+        Args:
+            messages: Conversation history in Claude format
+            on_tool_call: Optional callback when a tool is called (for streaming updates)
+
+        Returns:
+            Assistant's response with content and any tool calls made
+        """
+        tools = self.mcp_client.get_tools_for_claude()
+
+        # Initial Claude API call
+        response = self.client.messages.create(
+            model="claude-sonnet-4-20250514",
+            max_tokens=4096,
+            system=SYSTEM_PROMPT,
+            tools=tools,
+            messages=messages,
+        )
+
+        # Handle tool use loop
+        tool_calls = []
+        while response.stop_reason == "tool_use":
+            # Extract tool use blocks
+            tool_use_blocks = [block for block in response.content if block.type == "tool_use"]
+
+            # Execute each tool call
+            tool_results = []
+            for tool_use in tool_use_blocks:
+                tool_name = tool_use.name
+                tool_input = tool_use.input
+
+                if on_tool_call:
+                    on_tool_call(tool_name, tool_input)
+
+                tool_calls.append({"name": tool_name, "input": tool_input})
+
+                try:
+                    result = await self.mcp_client.call_tool(tool_name, tool_input)
+                    # Extract content from MCP result
+                    if hasattr(result, "content") and result.content:
+                        content = result.content[0]
+                        if hasattr(content, "text"):
+                            tool_result_content = content.text
+                        else:
+                            tool_result_content = str(content)
+                    else:
+                        tool_result_content = str(result)
+                except Exception as e:
+                    logger.error(f"Tool {tool_name} failed: {e}")
+                    tool_result_content = f"Error: {str(e)}"
+
+                tool_results.append(
+                    {
+                        "type": "tool_result",
+                        "tool_use_id": tool_use.id,
+                        "content": tool_result_content,
+                    }
+                )
+
+            # Continue conversation with tool results
+            messages = messages + [
+                {"role": "assistant", "content": response.content},
+                {"role": "user", "content": tool_results},
+            ]
+
+            response = self.client.messages.create(
+                model="claude-sonnet-4-20250514",
+                max_tokens=4096,
+                system=SYSTEM_PROMPT,
+                tools=tools,
+                messages=messages,
+            )
+
+        # Extract final text response
+        text_content = ""
+        for block in response.content:
+            if hasattr(block, "text"):
+                text_content += block.text
+
+        return {
+            "content": text_content,
+            "tool_calls": tool_calls,
+        }
+
+    def format_messages_for_claude(self, db_messages: list[dict]) -> list[dict]:
+        """Convert database messages to Claude API format."""
+        claude_messages = []
+        for msg in db_messages:
+            claude_messages.append(
+                {
+                    "role": msg["role"],
+                    "content": msg["content"],
+                }
+            )
+        return claude_messages
