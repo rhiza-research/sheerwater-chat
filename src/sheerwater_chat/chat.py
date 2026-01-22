@@ -1,6 +1,8 @@
 """Chat logic with Claude API and MCP tools."""
 
 import logging
+from collections.abc import Callable
+from typing import Any
 
 import anthropic
 
@@ -34,7 +36,7 @@ class ChatService:
         messages: list[dict],
         model: str | None = None,
         system_prompt: str | None = None,
-        on_tool_call: callable | None = None,
+        on_tool_call: Callable[[str, Any], None] | None = None,
     ) -> dict:
         """
         Send a message to Claude with MCP tools available.
