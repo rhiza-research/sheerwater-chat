@@ -1,0 +1,52 @@
+[project]
+name = "sheerwater-chat"
+version = "0.1.0"
+description = "Web chat interface for testing sheerwater-mcp"
+readme = "README.md"
+requires-python = ">=3.12"
+license = {text = "MIT"}
+authors = [
+    {name = "Rhiza Research"}
+]
+
+dependencies = [
+    "fastapi>=0.128.0",
+    "uvicorn[standard]>=0.40.0",
+    "httpx>=0.28.1",
+    "httpx-sse>=0.4.3",
+    "authlib>=1.6.6",
+    "itsdangerous>=2.2.0",
+    "python-multipart>=0.0.21",
+    "jinja2>=3.1.6",
+    "anthropic>=0.76.0",
+    "mcp>=1.25.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0.0",
+    "pytest-asyncio>=0.24.0",
+    "ruff>=0.8.0",
+    "pre-commit>=3.5.0",
+]
+
+[project.scripts]
+sheerwater-chat = "sheerwater_chat.main:run"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/sheerwater_chat"]
+
+[tool.ruff]
+line-length = 120
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "N", "W", "UP"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
