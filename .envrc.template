@@ -1,0 +1,21 @@
+# Keycloak OIDC settings (required)
+# For local dev with docker-compose:
+export KEYCLOAK_URL=http://localhost:8180
+export KEYCLOAK_REALM=sheerwater
+export KEYCLOAK_CLIENT_ID=sheerwater-chat
+export KEYCLOAK_CLIENT_SECRET=dev-secret
+
+# Anthropic API (required)
+export ANTHROPIC_API_KEY=sk-ant-...
+
+# Session secret (required)
+export SECRET_KEY=generate-a-random-secret-key
+
+# MCP server (optional, default: http://localhost:8000)
+export MCP_SERVER_URL=http://localhost:8000
+
+# Database (optional, default: sqlite:///./sheerwater_chat.db)
+export DATABASE_URL=sqlite:///./sheerwater_chat.db
+
+# Application base URL (optional, default: http://localhost:8080)
+export BASE_URL=http://localhost:8080
