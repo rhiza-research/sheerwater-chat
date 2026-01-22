@@ -22,7 +22,7 @@ class Config:
 
     # App settings
     secret_key: str
-    database_path: str
+    database_url: str
     base_url: str
 
     @classmethod
@@ -36,6 +36,6 @@ class Config:
             mcp_server_url=os.environ.get("MCP_SERVER_URL", "http://localhost:8000"),
             anthropic_api_key=os.environ["ANTHROPIC_API_KEY"],
             secret_key=os.environ["SECRET_KEY"],
-            database_path=os.environ.get("DATABASE_PATH", "sheerwater_chat.db"),
+            database_url=os.environ.get("DATABASE_URL", "sqlite:///./sheerwater_chat.db"),
             base_url=os.environ.get("BASE_URL", "http://localhost:8080"),
         )
