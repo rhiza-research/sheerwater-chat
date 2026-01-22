@@ -13,7 +13,7 @@ from pydantic import BaseModel
 from starlette.middleware.sessions import SessionMiddleware
 
 from .auth import create_oauth, get_user_from_session, get_user_id, get_user_name
-from .chat import ChatService
+from .chat import DEFAULT_MODEL, DEFAULT_SYSTEM_PROMPT, ChatService
 from .config import Config
 from .database import Database
 from .mcp_client import McpClient
@@ -181,8 +181,12 @@ async def send_chat_message(request: Request, body: SendMessageRequest, user: di
     db_messages = await db.get_messages(conversation_id)
     claude_messages = chat_service.format_messages_for_claude(db_messages)
 
+    # Get runtime settings
+    model = await db.get_setting("model", DEFAULT_MODEL)
+    system_prompt = await db.get_setting("system_prompt", DEFAULT_SYSTEM_PROMPT)
+
     # Send to Claude with MCP tools
-    result = await chat_service.send_message(claude_messages)
+    result = await chat_service.send_message(claude_messages, model=model, system_prompt=system_prompt)
 
     # Save assistant response
     await db.add_message(
@@ -226,6 +230,31 @@ async def list_tools(user: dict = Depends(require_auth)):
     """List available MCP tools."""
     tools = await mcp_client.list_tools()
     return [{"name": t.name, "description": t.description} for t in tools]
+
+
+@app.get("/api/settings")
+async def get_settings(user: dict = Depends(require_auth)):
+    """Get current settings with defaults."""
+    settings = await db.get_all_settings()
+    return {
+        "model": settings.get("model", DEFAULT_MODEL),
+        "system_prompt": settings.get("system_prompt", DEFAULT_SYSTEM_PROMPT),
+    }
+
+
+class UpdateSettingsRequest(BaseModel):
+    model: str | None = None
+    system_prompt: str | None = None
+
+
+@app.put("/api/settings")
+async def update_settings(body: UpdateSettingsRequest, user: dict = Depends(require_auth)):
+    """Update settings."""
+    if body.model is not None:
+        await db.set_setting("model", body.model)
+    if body.system_prompt is not None:
+        await db.set_setting("system_prompt", body.system_prompt)
+    return await get_settings(user)
 
 
 def run():

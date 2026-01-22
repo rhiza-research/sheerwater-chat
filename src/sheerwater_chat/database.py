@@ -32,6 +32,12 @@ class Database:
     async def _init_db(self):
         """Initialize database schema."""
         await self.database.execute("""
+            CREATE TABLE IF NOT EXISTS settings (
+                key TEXT PRIMARY KEY,
+                value TEXT NOT NULL
+            )
+        """)
+        await self.database.execute("""
             CREATE TABLE IF NOT EXISTS conversations (
                 id TEXT PRIMARY KEY,
                 user_id TEXT NOT NULL,
@@ -139,3 +145,26 @@ class Database:
                 "DELETE FROM conversations WHERE id = :id",
                 {"id": conversation_id},
             )
+
+    async def get_setting(self, key: str, default: str | None = None) -> str | None:
+        """Get a setting value by key."""
+        row = await self.database.fetch_one(
+            "SELECT value FROM settings WHERE key = :key",
+            {"key": key},
+        )
+        return row["value"] if row else default
+
+    async def set_setting(self, key: str, value: str):
+        """Set a setting value (insert or update)."""
+        await self.database.execute(
+            """
+            INSERT INTO settings (key, value) VALUES (:key, :value)
+            ON CONFLICT(key) DO UPDATE SET value = :value
+            """,
+            {"key": key, "value": value},
+        )
+
+    async def get_all_settings(self) -> dict[str, str]:
+        """Get all settings as a dictionary."""
+        rows = await self.database.fetch_all("SELECT key, value FROM settings")
+        return {row["key"]: row["value"] for row in rows}

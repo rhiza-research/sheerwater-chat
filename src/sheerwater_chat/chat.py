@@ -8,7 +8,9 @@ from .mcp_client import McpClient
 
 logger = logging.getLogger(__name__)
 
-SYSTEM_PROMPT = """\
+DEFAULT_MODEL = "claude-sonnet-4-20250514"
+
+DEFAULT_SYSTEM_PROMPT = """\
 You are a helpful assistant that helps meteorologists and forecasters evaluate and compare \
 weather forecast models. You have access to the Sheerwater benchmarking platform through various tools.
 
@@ -30,6 +32,8 @@ class ChatService:
     async def send_message(
         self,
         messages: list[dict],
+        model: str | None = None,
+        system_prompt: str | None = None,
         on_tool_call: callable | None = None,
     ) -> dict:
         """
@@ -37,18 +41,22 @@ class ChatService:
 
         Args:
             messages: Conversation history in Claude format
+            model: Claude model to use (defaults to DEFAULT_MODEL)
+            system_prompt: System prompt to use (defaults to DEFAULT_SYSTEM_PROMPT)
             on_tool_call: Optional callback when a tool is called (for streaming updates)
 
         Returns:
             Assistant's response with content and any tool calls made
         """
+        model = model or DEFAULT_MODEL
+        system_prompt = system_prompt or DEFAULT_SYSTEM_PROMPT
         tools = self.mcp_client.get_tools_for_claude()
 
         # Initial Claude API call
         response = self.client.messages.create(
-            model="claude-sonnet-4-20250514",
+            model=model,
             max_tokens=4096,
-            system=SYSTEM_PROMPT,
+            system=system_prompt,
             tools=tools,
             messages=messages,
         )
@@ -100,9 +108,9 @@ class ChatService:
             ]
 
             response = self.client.messages.create(
-                model="claude-sonnet-4-20250514",
+                model=model,
                 max_tokens=4096,
-                system=SYSTEM_PROMPT,
+                system=system_prompt,
                 tools=tools,
                 messages=messages,
             )
