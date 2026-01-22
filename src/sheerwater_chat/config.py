@@ -9,7 +9,8 @@ class Config:
     """Application configuration loaded from environment variables."""
 
     # Keycloak OIDC settings
-    keycloak_url: str
+    keycloak_url: str  # Internal URL for backend calls (e.g., http://keycloak:8080)
+    keycloak_public_url: str  # Public URL for browser redirects (e.g., http://localhost:8180)
     keycloak_realm: str
     keycloak_client_id: str
     keycloak_client_secret: str
@@ -28,8 +29,10 @@ class Config:
     @classmethod
     def from_env(cls) -> "Config":
         """Load configuration from environment variables."""
+        keycloak_url = os.environ["KEYCLOAK_URL"]
         return cls(
-            keycloak_url=os.environ["KEYCLOAK_URL"],
+            keycloak_url=keycloak_url,
+            keycloak_public_url=os.environ.get("KEYCLOAK_PUBLIC_URL", keycloak_url),
             keycloak_realm=os.environ["KEYCLOAK_REALM"],
             keycloak_client_id=os.environ["KEYCLOAK_CLIENT_ID"],
             keycloak_client_secret=os.environ["KEYCLOAK_CLIENT_SECRET"],

@@ -7,14 +7,27 @@ from .config import Config
 
 
 def create_oauth(config: Config) -> OAuth:
-    """Create OAuth client configured for Keycloak."""
+    """Create OAuth client configured for Keycloak.
+
+    Uses separate URLs for browser redirects (public) vs backend calls (internal).
+    This allows running in Docker where internal and external URLs differ.
+    """
     oauth = OAuth()
+
+    # Build URLs for both internal (backend) and public (browser) access
+    internal_base = f"{config.keycloak_url}/realms/{config.keycloak_realm}/protocol/openid-connect"
+    public_base = f"{config.keycloak_public_url}/realms/{config.keycloak_realm}/protocol/openid-connect"
 
     oauth.register(
         name="keycloak",
         client_id=config.keycloak_client_id,
         client_secret=config.keycloak_client_secret,
-        server_metadata_url=(f"{config.keycloak_url}/realms/{config.keycloak_realm}/.well-known/openid-configuration"),
+        # Authorization URL is accessed by the browser - use public URL
+        authorize_url=f"{public_base}/auth",
+        # Token and userinfo endpoints are accessed by the backend - use internal URL
+        access_token_url=f"{internal_base}/token",
+        userinfo_endpoint=f"{internal_base}/userinfo",
+        jwks_uri=f"{internal_base}/certs",
         client_kwargs={"scope": "openid email profile"},
     )
 
