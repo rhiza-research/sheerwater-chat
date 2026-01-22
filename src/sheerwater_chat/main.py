@@ -40,16 +40,16 @@ async def lifespan(app: FastAPI):
     chat_service = ChatService(config.anthropic_api_key, mcp_client)
     oauth = create_oauth(config)
 
-    # Connect to database and MCP server
+    # Connect to database
     await db.connect()
     logger.info("Connected to database")
-    await mcp_client.connect()
-    logger.info("Connected to MCP server")
 
-    yield
+    # Connect to MCP server using proper async context management
+    async with mcp_client.connection():
+        logger.info("Connected to MCP server")
+        yield
 
-    # Cleanup
-    await mcp_client.disconnect()
+    # Cleanup database
     await db.disconnect()
 
 
