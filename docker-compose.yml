@@ -18,6 +18,10 @@ services:
       - "8000:8000"
     volumes:
       - ../sheerwater-mcp/src:/app/sheerwater-mcp/src:ro
+      # Mount GCP credentials for data access (run: gcloud auth application-default set-quota-project sheerwater)
+      - ~/.config/gcloud:/root/.config/gcloud:ro
+    environment:
+      GOOGLE_CLOUD_PROJECT: sheerwater
 
   sheerwater-chat:
     build: .
