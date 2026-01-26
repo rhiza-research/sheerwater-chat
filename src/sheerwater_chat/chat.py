@@ -65,6 +65,7 @@ class ChatService:
 
         # Handle tool use loop
         tool_calls = []
+        images = []  # Collect images from tool results
         while response.stop_reason == "tool_use":
             # Extract tool use blocks
             tool_use_blocks = [block for block in response.content if block.type == "tool_use"]
@@ -83,12 +84,23 @@ class ChatService:
                 try:
                     result = await self.mcp_client.call_tool(tool_name, tool_input)
                     # Extract content from MCP result
+                    tool_result_content = ""
                     if hasattr(result, "content") and result.content:
-                        content = result.content[0]
-                        if hasattr(content, "text"):
-                            tool_result_content = content.text
-                        else:
-                            tool_result_content = str(content)
+                        for content_item in result.content:
+                            # Handle image content
+                            if hasattr(content_item, "type") and content_item.type == "image":
+                                # Store image for frontend display
+                                mime_type = getattr(content_item, "mimeType", "image/png")
+                                images.append({
+                                    "data": content_item.data,
+                                    "mimeType": mime_type,
+                                })
+                                # Tell Claude we generated an image
+                                tool_result_content += "[Chart image generated successfully]"
+                            elif hasattr(content_item, "text"):
+                                tool_result_content += content_item.text
+                            else:
+                                tool_result_content += str(content_item)
                     else:
                         tool_result_content = str(result)
                 except Exception as e:
@@ -122,6 +134,15 @@ class ChatService:
         for block in response.content:
             if hasattr(block, "text"):
                 text_content += block.text
+
+        # Prepend images as markdown data URLs so they render in the chat
+        if images:
+            image_markdown = ""
+            for img in images:
+                mime_type = img.get("mimeType", "image/png")
+                data = img["data"]
+                image_markdown += f"![Chart](data:{mime_type};base64,{data})\n\n"
+            text_content = image_markdown + text_content
 
         return {
             "content": text_content,
