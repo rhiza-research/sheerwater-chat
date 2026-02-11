@@ -11,14 +11,14 @@ services:
       - ./keycloak/realm.json:/opt/keycloak/data/import/realm.json:ro
 
   sheerwater-mcp:
-    image: ghcr.io/rhiza-research/sheerwater-mcp:latest
+    image: ghcr.io/rhiza-research/sheerwater/mcp:latest
     build:
-      context: ..
-      dockerfile: sheerwater-mcp/Dockerfile
+      context: ../sheerwater
+      dockerfile: mcp/Dockerfile
     ports:
       - "8000:8000"
     volumes:
-      - ../sheerwater-mcp/src:/app/sheerwater-mcp/src:ro
+      - ../sheerwater/sheerwater:/app/sheerwater:ro
       # Mount GCP credentials for data access (run: gcloud auth application-default set-quota-project sheerwater)
       - ~/.config/gcloud:/root/.config/gcloud:ro
     environment:
