@@ -11,6 +11,7 @@ services:
       - ./keycloak/realm.json:/opt/keycloak/data/import/realm.json:ro
 
   sheerwater-mcp:
+    image: ghcr.io/rhiza-research/sheerwater-mcp:latest
     build:
       context: ..
       dockerfile: sheerwater-mcp/Dockerfile
@@ -24,6 +25,7 @@ services:
       GOOGLE_CLOUD_PROJECT: sheerwater
 
   sheerwater-chat:
+    image: ghcr.io/rhiza-research/sheerwater-chat:latest
     build: .
     ports:
       - "8080:8080"
