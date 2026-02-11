@@ -1,0 +1,8 @@
+apiVersion: v2
+name: sheerwater-chat
+description: Web chat interface for the Sheerwater benchmarking platform
+
+type: application
+
+version: 0.1.0
+appVersion: "0.1.0"
