@@ -154,3 +154,57 @@ input.addEventListener('keydown', (e) => {
         form.dispatchEvent(new Event('submit'));
     }
 });
+
+// Settings modal
+const settingsBtn = document.getElementById('settings-btn');
+const settingsModal = document.getElementById('settings-modal');
+const settingsForm = document.getElementById('settings-form');
+const settingsCancel = document.getElementById('settings-cancel');
+const modelSelect = document.getElementById('model-select');
+const systemPrompt = document.getElementById('system-prompt');
+const modalOverlay = settingsModal.querySelector('.modal-overlay');
+
+async function openSettings() {
+    try {
+        const response = await fetch('/api/settings');
+        if (response.ok) {
+            const settings = await response.json();
+            modelSelect.value = settings.model;
+            systemPrompt.value = settings.system_prompt;
+        }
+    } catch (e) {
+        console.error('Failed to load settings:', e);
+    }
+    settingsModal.classList.remove('hidden');
+}
+
+function closeSettings() {
+    settingsModal.classList.add('hidden');
+}
+
+settingsBtn.addEventListener('click', openSettings);
+settingsCancel.addEventListener('click', closeSettings);
+modalOverlay.addEventListener('click', closeSettings);
+
+settingsForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    try {
+        const response = await fetch('/api/settings', {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                model: modelSelect.value,
+                system_prompt: systemPrompt.value
+            })
+        });
+
+        if (response.ok) {
+            closeSettings();
+        } else {
+            console.error('Failed to save settings');
+        }
+    } catch (e) {
+        console.error('Failed to save settings:', e);
+    }
+});
