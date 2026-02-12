@@ -55,13 +55,17 @@ class ChatService:
         tools = self.mcp_client.get_tools_for_claude()
 
         # Initial Claude API call
-        response = await self.client.messages.create(
-            model=model,
-            max_tokens=4096,
-            system=system_prompt,
-            tools=tools,
-            messages=messages,
-        )
+        try:
+            response = await self.client.messages.create(
+                model=model,
+                max_tokens=4096,
+                system=system_prompt,
+                tools=tools,
+                messages=messages,
+            )
+        except anthropic.APIConnectionError as e:
+            logger.error(f"Anthropic API connection failed: {e.__cause__}")
+            raise
 
         # Handle tool use loop
         tool_calls = []
