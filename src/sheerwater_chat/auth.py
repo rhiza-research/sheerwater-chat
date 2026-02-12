@@ -28,7 +28,7 @@ def create_oauth(config: Config) -> OAuth:
         access_token_url=f"{internal_base}/token",
         userinfo_endpoint=f"{internal_base}/userinfo",
         jwks_uri=f"{internal_base}/certs",
-        client_kwargs={"scope": "openid email profile"},
+        client_kwargs={"scope": "openid email profile", "code_challenge_method": "S256"},
     )
 
     return oauth
