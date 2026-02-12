@@ -28,7 +28,7 @@ class ChatService:
     """Service for handling chat interactions with Claude and MCP tools."""
 
     def __init__(self, anthropic_api_key: str, mcp_client: McpClient):
-        self.client = anthropic.Anthropic(api_key=anthropic_api_key)
+        self.client = anthropic.AsyncAnthropic(api_key=anthropic_api_key)
         self.mcp_client = mcp_client
 
     async def send_message(
@@ -55,7 +55,7 @@ class ChatService:
         tools = self.mcp_client.get_tools_for_claude()
 
         # Initial Claude API call
-        response = self.client.messages.create(
+        response = await self.client.messages.create(
             model=model,
             max_tokens=4096,
             system=system_prompt,
@@ -121,7 +121,7 @@ class ChatService:
                 {"role": "user", "content": tool_results},
             ]
 
-            response = self.client.messages.create(
+            response = await self.client.messages.create(
                 model=model,
                 max_tokens=4096,
                 system=system_prompt,
