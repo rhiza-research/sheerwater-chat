@@ -30,7 +30,7 @@ spec:
               protocol: TCP
           env:
             - name: DATABASE_URL
-              value: "sqlite:///data/sheerwater_chat.db"
+              value: "sqlite:////data/sheerwater_chat.db"
             {{- range $key, $value := .Values.env }}
             {{- if $value }}
             - name: {{ $key }}
