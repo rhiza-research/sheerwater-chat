@@ -208,13 +208,21 @@ class ChatService:
         }
 
     def format_messages_for_claude(self, db_messages: list[dict]) -> list[dict]:
-        """Convert database messages to Claude API format."""
+        """Convert database messages to Claude API format, stripping images to save tokens."""
+        import re
+
         claude_messages = []
         for msg in db_messages:
+            content = msg["content"]
+
+            # Strip base64 image data URLs from content to save tokens
+            # Pattern: ![Chart](data:image/...;base64,<long base64 string>)
+            content = re.sub(r'!\[Chart\]\(data:image/[^;]+;base64,[^\)]+\)\s*', '', content)
+
             claude_messages.append(
                 {
                     "role": msg["role"],
-                    "content": msg["content"],
+                    "content": content,
                 }
             )
         return claude_messages
