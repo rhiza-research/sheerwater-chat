@@ -56,6 +56,15 @@ function updateCountdownDisplay() {
         rateLimitResetTime.textContent = `${diffSec}s`;
     } else {
         rateLimitResetTime.textContent = '0s';
+
+        // Reset to full limit when window expires
+        const limit = parseInt(rateLimitTotal.textContent.replace(/,/g, ''));
+        if (!isNaN(limit)) {
+            rateLimitRemaining.textContent = limit.toLocaleString();
+            rateLimitFill.style.width = '100%';
+            rateLimitFill.style.background = '#4a90d9'; // Blue
+        }
+
         if (rateLimitCountdownInterval) {
             clearInterval(rateLimitCountdownInterval);
             rateLimitCountdownInterval = null;
