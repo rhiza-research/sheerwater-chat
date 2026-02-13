@@ -63,6 +63,18 @@ class ChatService:
                 tools=tools,
                 messages=messages,
             )
+        except anthropic.RateLimitError as e:
+            # Log rate limit details from response headers
+            if hasattr(e, 'response') and e.response:
+                headers = e.response.headers
+                logger.error(
+                    f"Rate limit exceeded. "
+                    f"Input tokens limit: {headers.get('anthropic-ratelimit-input-tokens-limit', 'unknown')}, "
+                    f"Input tokens remaining: {headers.get('anthropic-ratelimit-input-tokens-remaining', 'unknown')}, "
+                    f"Input tokens reset: {headers.get('anthropic-ratelimit-input-tokens-reset', 'unknown')}, "
+                    f"Retry-After: {headers.get('retry-after', 'unknown')} seconds"
+                )
+            raise
         except anthropic.APIConnectionError as e:
             logger.error(f"Anthropic API connection failed: {e.__cause__}")
             raise
@@ -125,13 +137,26 @@ class ChatService:
                 {"role": "user", "content": tool_results},
             ]
 
-            response = await self.client.messages.create(
-                model=model,
-                max_tokens=4096,
-                system=system_prompt,
-                tools=tools,
-                messages=messages,
-            )
+            try:
+                response = await self.client.messages.create(
+                    model=model,
+                    max_tokens=4096,
+                    system=system_prompt,
+                    tools=tools,
+                    messages=messages,
+                )
+            except anthropic.RateLimitError as e:
+                # Log rate limit details from response headers
+                if hasattr(e, 'response') and e.response:
+                    headers = e.response.headers
+                    logger.error(
+                        f"Rate limit exceeded in tool loop. "
+                        f"Input tokens limit: {headers.get('anthropic-ratelimit-input-tokens-limit', 'unknown')}, "
+                        f"Input tokens remaining: {headers.get('anthropic-ratelimit-input-tokens-remaining', 'unknown')}, "
+                        f"Input tokens reset: {headers.get('anthropic-ratelimit-input-tokens-reset', 'unknown')}, "
+                        f"Retry-After: {headers.get('retry-after', 'unknown')} seconds"
+                    )
+                raise
 
         # Extract final text response
         text_content = ""
