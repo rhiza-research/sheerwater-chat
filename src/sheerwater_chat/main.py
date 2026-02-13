@@ -1,6 +1,7 @@
 """FastAPI application for sheerwater-chat."""
 
 import logging
+import os
 import uuid
 from contextlib import asynccontextmanager
 from pathlib import Path
@@ -20,6 +21,16 @@ from .mcp_client import McpClient
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+
+# Get build info from environment (set at build time)
+GIT_SHA = os.getenv("GIT_SHA", "unknown")
+BUILD_TIMESTAMP = os.getenv("BUILD_TIMESTAMP", "unknown")
+
+# Format version as "YYYY-MM-DD (short-sha)"
+if GIT_SHA != "unknown" and BUILD_TIMESTAMP != "unknown":
+    APP_VERSION = f"{BUILD_TIMESTAMP} ({GIT_SHA[:7]})"
+else:
+    APP_VERSION = "unknown"
 
 # Global instances
 config: Config = None
@@ -117,6 +128,7 @@ async def index(request: Request):
             "conversations": conversations,
             "current_conversation": None,
             "messages": [],
+            "version": APP_VERSION,
         },
     )
 
@@ -141,6 +153,7 @@ async def conversation_page(request: Request, conversation_id: str, user: dict =
             "conversations": conversations,
             "current_conversation": conversation,
             "messages": messages,
+            "version": APP_VERSION,
         },
     )
 

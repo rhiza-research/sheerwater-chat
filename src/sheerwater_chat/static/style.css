@@ -118,8 +118,25 @@ body {
     font-size: 0.85rem;
 }
 
+.user-info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
 .user-name {
     color: #888;
+}
+
+.app-version {
+    color: #666;
+    font-size: 0.75rem;
+}
+
+.footer-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
 }
 
 .logout-link {

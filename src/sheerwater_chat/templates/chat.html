@@ -21,9 +21,14 @@
                 {% endfor %}
             </nav>
             <div class="sidebar-footer">
-                <span class="user-name">{{ user_name }}</span>
-                <button id="settings-btn" class="settings-btn" title="Settings">⚙</button>
-                <a href="/logout" class="logout-link">Logout</a>
+                <div class="user-info">
+                    <span class="user-name">{{ user_name }}</span>
+                    <span class="app-version">v{{ version }}</span>
+                </div>
+                <div class="footer-actions">
+                    <button id="settings-btn" class="settings-btn" title="Settings">⚙</button>
+                    <a href="/logout" class="logout-link">Logout</a>
+                </div>
             </div>
         </aside>
 
