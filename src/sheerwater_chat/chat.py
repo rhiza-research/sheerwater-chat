@@ -156,13 +156,22 @@ class ChatService:
             ]
 
             try:
-                response = await self.client.messages.create(
+                raw_response = await self.client.messages.with_raw_response.create(
                     model=model,
                     max_tokens=4096,
                     system=system_prompt,
                     tools=tools,
                     messages=messages,
                 )
+                response = raw_response.parse()
+
+                # Update rate limit info from latest response
+                headers = raw_response.headers
+                rate_limit_info = {
+                    "input_tokens_limit": headers.get("anthropic-ratelimit-input-tokens-limit"),
+                    "input_tokens_remaining": headers.get("anthropic-ratelimit-input-tokens-remaining"),
+                    "input_tokens_reset": headers.get("anthropic-ratelimit-input-tokens-reset"),
+                }
             except anthropic.RateLimitError as e:
                 # Log rate limit details from response headers
                 if hasattr(e, 'response') and e.response:
