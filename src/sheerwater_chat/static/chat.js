@@ -14,6 +14,10 @@ const rateLimitRemaining = document.getElementById('rate-limit-remaining');
 const rateLimitTotal = document.getElementById('rate-limit-total');
 const rateLimitResetTime = document.getElementById('rate-limit-reset-time');
 
+// Global state for rate limit countdown
+let rateLimitResetTimestamp = null;
+let rateLimitCountdownInterval = null;
+
 // Configure marked.js with highlight.js for code syntax highlighting
 marked.use(markedHighlight({
     langPrefix: 'hljs language-',
@@ -37,6 +41,25 @@ function renderMarkdown(content) {
     } catch (e) {
         console.error('Markdown parse error:', e);
         return content;
+    }
+}
+
+// Update countdown timer display
+function updateCountdownDisplay() {
+    if (!rateLimitResetTimestamp) return;
+
+    const now = new Date();
+    const diffMs = rateLimitResetTimestamp - now;
+    const diffSec = Math.floor(diffMs / 1000);
+
+    if (diffSec > 0) {
+        rateLimitResetTime.textContent = `${diffSec}s`;
+    } else {
+        rateLimitResetTime.textContent = '0s';
+        if (rateLimitCountdownInterval) {
+            clearInterval(rateLimitCountdownInterval);
+            rateLimitCountdownInterval = null;
+        }
     }
 }
 
@@ -69,18 +92,20 @@ function updateRateLimitStatus(rateLimitData) {
         rateLimitFill.style.background = '#4a90d9'; // Blue
     }
 
-    // Format reset time
+    // Set up countdown timer
     if (rateLimitData.input_tokens_reset) {
-        const resetTime = new Date(rateLimitData.input_tokens_reset);
-        const now = new Date();
-        const diffMs = resetTime - now;
-        const diffSec = Math.floor(diffMs / 1000);
+        rateLimitResetTimestamp = new Date(rateLimitData.input_tokens_reset);
 
-        if (diffSec > 0) {
-            rateLimitResetTime.textContent = `${diffSec}s`;
-        } else {
-            rateLimitResetTime.textContent = 'soon';
+        // Clear existing interval if any
+        if (rateLimitCountdownInterval) {
+            clearInterval(rateLimitCountdownInterval);
         }
+
+        // Update display immediately
+        updateCountdownDisplay();
+
+        // Start countdown interval (updates every second)
+        rateLimitCountdownInterval = setInterval(updateCountdownDisplay, 1000);
     }
 }
 
