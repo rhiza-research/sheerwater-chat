@@ -170,6 +170,8 @@ class SendMessageResponse(BaseModel):
     conversation_id: str
     response: str
     tool_calls: list[dict]
+    usage: dict | None = None
+    rate_limit: dict | None = None
 
 
 @app.post("/api/chat", response_model=SendMessageResponse)
@@ -220,6 +222,8 @@ async def send_chat_message(request: Request, body: SendMessageRequest, user: di
         conversation_id=conversation_id,
         response=result["content"],
         tool_calls=result["tool_calls"],
+        usage=result.get("usage"),
+        rate_limit=result.get("rate_limit"),
     )
 
 
