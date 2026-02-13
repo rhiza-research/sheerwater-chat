@@ -8,6 +8,11 @@ const messagesDiv = document.getElementById('messages');
 const sendBtn = document.getElementById('send-btn');
 const newChatBtn = document.getElementById('new-chat');
 const conversationIdInput = document.getElementById('conversation-id');
+const rateLimitStatus = document.getElementById('rate-limit-status');
+const rateLimitFill = document.getElementById('rate-limit-fill');
+const rateLimitRemaining = document.getElementById('rate-limit-remaining');
+const rateLimitTotal = document.getElementById('rate-limit-total');
+const rateLimitResetTime = document.getElementById('rate-limit-reset-time');
 
 // Configure marked.js with highlight.js for code syntax highlighting
 marked.use(markedHighlight({
@@ -32,6 +37,50 @@ function renderMarkdown(content) {
     } catch (e) {
         console.error('Markdown parse error:', e);
         return content;
+    }
+}
+
+// Update rate limit status bar
+function updateRateLimitStatus(rateLimitData) {
+    if (!rateLimitData) return;
+
+    const remaining = parseInt(rateLimitData.input_tokens_remaining);
+    const limit = parseInt(rateLimitData.input_tokens_limit);
+
+    if (isNaN(remaining) || isNaN(limit)) return;
+
+    // Show the status bar
+    rateLimitStatus.classList.remove('hidden');
+
+    // Update values
+    rateLimitRemaining.textContent = remaining.toLocaleString();
+    rateLimitTotal.textContent = limit.toLocaleString();
+
+    // Update progress bar
+    const percentage = (remaining / limit) * 100;
+    rateLimitFill.style.width = `${percentage}%`;
+
+    // Color based on remaining percentage
+    if (percentage < 20) {
+        rateLimitFill.style.background = '#e74c3c'; // Red
+    } else if (percentage < 50) {
+        rateLimitFill.style.background = '#f39c12'; // Orange
+    } else {
+        rateLimitFill.style.background = '#4a90d9'; // Blue
+    }
+
+    // Format reset time
+    if (rateLimitData.input_tokens_reset) {
+        const resetTime = new Date(rateLimitData.input_tokens_reset);
+        const now = new Date();
+        const diffMs = resetTime - now;
+        const diffSec = Math.floor(diffMs / 1000);
+
+        if (diffSec > 0) {
+            rateLimitResetTime.textContent = `${diffSec}s`;
+        } else {
+            rateLimitResetTime.textContent = 'soon';
+        }
     }
 }
 
@@ -98,7 +147,12 @@ form.addEventListener('submit', async (e) => {
 
         // Remove loading and add actual response
         loadingMsg.remove();
-        addMessage('assistant', data.response, false, data.tool_calls);
+        addMessage('assistant', data.response, false, data.tool_calls, data.usage);
+
+        // Update rate limit status bar
+        if (data.rate_limit) {
+            updateRateLimitStatus(data.rate_limit);
+        }
 
     } catch (error) {
         loadingMsg.remove();
@@ -111,7 +165,7 @@ form.addEventListener('submit', async (e) => {
 });
 
 // Add message to UI
-function addMessage(role, content, loading = false, toolCalls = null) {
+function addMessage(role, content, loading = false, toolCalls = null, usage = null) {
     const div = document.createElement('div');
     div.className = `message ${role}` + (loading ? ' loading' : '');
 
@@ -134,6 +188,20 @@ function addMessage(role, content, loading = false, toolCalls = null) {
             toolsDiv.appendChild(tcDiv);
         });
         div.appendChild(toolsDiv);
+    }
+
+    if (usage && role === 'assistant') {
+        const usageDiv = document.createElement('div');
+        usageDiv.className = 'token-usage';
+        usageDiv.innerHTML = `
+            <span class="usage-label">Tokens:</span>
+            <span class="usage-value">${usage.input_tokens.toLocaleString()} in</span>
+            <span class="usage-sep">·</span>
+            <span class="usage-value">${usage.output_tokens.toLocaleString()} out</span>
+            <span class="usage-sep">·</span>
+            <span class="usage-total">${usage.total_tokens.toLocaleString()} total</span>
+        `;
+        div.appendChild(usageDiv);
     }
 
     messagesDiv.appendChild(div);

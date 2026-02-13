@@ -483,3 +483,70 @@ body {
 .btn-secondary:hover {
     background: #4a4a6a;
 }
+
+/* Token Usage Display */
+.token-usage {
+    font-size: 0.75rem;
+    color: #888;
+    margin-top: 0.5rem;
+    padding-top: 0.5rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
+    font-family: 'SF Mono', Monaco, 'Cascadia Code', monospace;
+}
+
+.usage-label {
+    margin-right: 0.5rem;
+}
+
+.usage-value {
+    color: #aaa;
+}
+
+.usage-sep {
+    margin: 0 0.5rem;
+    color: #555;
+}
+
+.usage-total {
+    color: #4a90d9;
+    font-weight: 500;
+}
+
+/* Rate Limit Status Bar */
+.rate-limit-status {
+    background: #16162a;
+    border-bottom: 1px solid #2a2a4a;
+    padding: 0.75rem 1rem;
+    font-size: 0.85rem;
+}
+
+.rate-limit-status.hidden {
+    display: none;
+}
+
+.rate-limit-bar {
+    background: rgba(255, 255, 255, 0.05);
+    height: 4px;
+    border-radius: 2px;
+    overflow: hidden;
+    margin-bottom: 0.5rem;
+}
+
+.rate-limit-fill {
+    height: 100%;
+    background: #4a90d9;
+    transition: width 0.3s ease, background 0.3s ease;
+}
+
+.rate-limit-text {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    color: #aaa;
+    font-family: 'SF Mono', Monaco, 'Cascadia Code', monospace;
+}
+
+.rate-limit-reset {
+    color: #888;
+    font-size: 0.8rem;
+}

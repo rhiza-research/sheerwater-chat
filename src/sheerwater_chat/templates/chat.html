@@ -28,6 +28,16 @@
         </aside>
 
         <main class="chat-area">
+            <div id="rate-limit-status" class="rate-limit-status hidden">
+                <div class="rate-limit-bar">
+                    <div class="rate-limit-fill" id="rate-limit-fill"></div>
+                </div>
+                <div class="rate-limit-text">
+                    <span id="rate-limit-remaining">--</span> / <span id="rate-limit-total">--</span> tokens remaining
+                    <span class="rate-limit-reset">Resets: <span id="rate-limit-reset-time">--</span></span>
+                </div>
+            </div>
+
             <div class="messages" id="messages">
                 {% if not messages %}
                 <div class="welcome">

@@ -55,14 +55,24 @@ class ChatService:
         tools = self.mcp_client.get_tools_for_claude()
 
         # Initial Claude API call
+        rate_limit_info = None
         try:
-            response = await self.client.messages.create(
+            raw_response = await self.client.messages.with_raw_response.create(
                 model=model,
                 max_tokens=4096,
                 system=system_prompt,
                 tools=tools,
                 messages=messages,
             )
+            response = raw_response.parse()
+
+            # Capture rate limit headers
+            headers = raw_response.headers
+            rate_limit_info = {
+                "input_tokens_limit": headers.get("anthropic-ratelimit-input-tokens-limit"),
+                "input_tokens_remaining": headers.get("anthropic-ratelimit-input-tokens-remaining"),
+                "input_tokens_reset": headers.get("anthropic-ratelimit-input-tokens-reset"),
+            }
         except anthropic.RateLimitError as e:
             # Log rate limit details from response headers
             if hasattr(e, 'response') and e.response:
@@ -82,6 +92,14 @@ class ChatService:
         # Handle tool use loop
         tool_calls = []
         images = []  # Collect images from tool results
+        total_input_tokens = 0
+        total_output_tokens = 0
+
+        # Track usage from initial response
+        if hasattr(response, 'usage'):
+            total_input_tokens += response.usage.input_tokens
+            total_output_tokens += response.usage.output_tokens
+
         while response.stop_reason == "tool_use":
             # Extract tool use blocks
             tool_use_blocks = [block for block in response.content if block.type == "tool_use"]
@@ -158,6 +176,11 @@ class ChatService:
                     )
                 raise
 
+            # Track usage from tool loop response
+            if hasattr(response, 'usage'):
+                total_input_tokens += response.usage.input_tokens
+                total_output_tokens += response.usage.output_tokens
+
         # Extract final text response
         text_content = ""
         for block in response.content:
@@ -176,6 +199,12 @@ class ChatService:
         return {
             "content": text_content,
             "tool_calls": tool_calls,
+            "usage": {
+                "input_tokens": total_input_tokens,
+                "output_tokens": total_output_tokens,
+                "total_tokens": total_input_tokens + total_output_tokens,
+            },
+            "rate_limit": rate_limit_info,
         }
 
     def format_messages_for_claude(self, db_messages: list[dict]) -> list[dict]:
