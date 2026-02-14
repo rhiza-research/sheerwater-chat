@@ -53,6 +53,7 @@ class Database:
                 role TEXT NOT NULL,
                 content TEXT NOT NULL,
                 tool_calls TEXT,
+                chart_urls TEXT,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 FOREIGN KEY (conversation_id) REFERENCES conversations(id)
             )
@@ -61,6 +62,12 @@ class Database:
         await self.database.execute(
             "CREATE INDEX IF NOT EXISTS idx_messages_conversation_id ON messages(conversation_id)"
         )
+
+        # Migration: add chart_urls column to existing messages table
+        try:
+            await self.database.execute("ALTER TABLE messages ADD COLUMN chart_urls TEXT")
+        except Exception:
+            pass  # Column already exists
 
     async def create_conversation(self, conversation_id: str, user_id: str, title: str | None = None) -> dict:
         """Create a new conversation."""
@@ -99,15 +106,17 @@ class Database:
         role: str,
         content: str,
         tool_calls: list[dict] | None = None,
+        chart_urls: list[str] | None = None,
     ) -> int:
         """Add a message to a conversation."""
         result = await self.database.execute(
-            "INSERT INTO messages (conversation_id, role, content, tool_calls) VALUES (:conv_id, :role, :content, :tc)",
+            "INSERT INTO messages (conversation_id, role, content, tool_calls, chart_urls) VALUES (:conv_id, :role, :content, :tc, :cu)",
             {
                 "conv_id": conversation_id,
                 "role": role,
                 "content": content,
                 "tc": json.dumps(tool_calls) if tool_calls else None,
+                "cu": json.dumps(chart_urls) if chart_urls else None,
             },
         )
         await self.database.execute(
@@ -127,6 +136,8 @@ class Database:
             msg = dict(row._mapping)
             if msg["tool_calls"]:
                 msg["tool_calls"] = json.loads(msg["tool_calls"])
+            if msg.get("chart_urls"):
+                msg["chart_urls"] = json.loads(msg["chart_urls"])
             messages.append(msg)
         return messages
 

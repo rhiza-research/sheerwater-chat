@@ -1,6 +1,8 @@
 """Chat logic with Claude API and MCP tools."""
 
+import json
 import logging
+import re
 from collections.abc import Callable
 from typing import Any
 
@@ -22,6 +24,32 @@ When a user asks about forecast models:
 3. Use the visualization tools to generate charts or dashboard links
 
 Be concise and helpful. When presenting data, format it clearly."""
+
+
+def extract_chart_url(text: str) -> str | None:
+    """Extract chart URL from a JSON object in text content.
+
+    Handles both new format (png_url/html_url) and legacy format (chart_url).
+    Prefers html_url for interactive rendering.
+
+    Args:
+        text: Text that may contain a JSON object with chart URL fields.
+
+    Returns:
+        The chart URL if found, None otherwise.
+    """
+    try:
+        data = json.loads(text)
+        if isinstance(data, dict):
+            # New format: prefer html_url for interactive charts
+            if "html_url" in data:
+                return data["html_url"]
+            # Legacy format
+            if "chart_url" in data:
+                return data["chart_url"]
+    except (json.JSONDecodeError, TypeError):
+        pass
+    return None
 
 
 class ChatService:
@@ -91,7 +119,7 @@ class ChatService:
 
         # Handle tool use loop
         tool_calls = []
-        images = []  # Collect images from tool results
+        chart_urls = []  # Collect chart URLs from tool results
         total_input_tokens = 0
         total_output_tokens = 0
 
@@ -121,18 +149,16 @@ class ChatService:
                     tool_result_content = ""
                     if hasattr(result, "content") and result.content:
                         for content_item in result.content:
-                            # Handle image content
-                            if hasattr(content_item, "type") and content_item.type == "image":
-                                # Store image for frontend display
-                                mime_type = getattr(content_item, "mimeType", "image/png")
-                                images.append({
-                                    "data": content_item.data,
-                                    "mimeType": mime_type,
-                                })
-                                # Tell Claude we generated an image
-                                tool_result_content += "[Chart image generated successfully]"
-                            elif hasattr(content_item, "text"):
-                                tool_result_content += content_item.text
+                            if hasattr(content_item, "text"):
+                                text = content_item.text
+                                # Check if this content block contains a chart_url
+                                chart_url = extract_chart_url(text)
+                                if chart_url:
+                                    # Store URL for frontend, don't pass to LLM
+                                    chart_urls.append(chart_url)
+                                else:
+                                    # Pass text summary to LLM
+                                    tool_result_content += text
                             else:
                                 tool_result_content += str(content_item)
                     else:
@@ -196,18 +222,10 @@ class ChatService:
             if hasattr(block, "text"):
                 text_content += block.text
 
-        # Prepend images as markdown data URLs so they render in the chat
-        if images:
-            image_markdown = ""
-            for img in images:
-                mime_type = img.get("mimeType", "image/png")
-                data = img["data"]
-                image_markdown += f"![Chart](data:{mime_type};base64,{data})\n\n"
-            text_content = image_markdown + text_content
-
         return {
             "content": text_content,
             "tool_calls": tool_calls,
+            "chart_urls": chart_urls,
             "usage": {
                 "input_tokens": total_input_tokens,
                 "output_tokens": total_output_tokens,
@@ -218,13 +236,11 @@ class ChatService:
 
     def format_messages_for_claude(self, db_messages: list[dict]) -> list[dict]:
         """Convert database messages to Claude API format, stripping images to save tokens."""
-        import re
-
         claude_messages = []
         for msg in db_messages:
             content = msg["content"]
 
-            # Strip base64 image data URLs from content to save tokens
+            # Strip base64 image data URLs from content to save tokens (legacy)
             # Pattern: ![Chart](data:image/...;base64,<long base64 string>)
             content = re.sub(r'!\[Chart\]\(data:image/[^;]+;base64,[^\)]+\)\s*', '', content)
 

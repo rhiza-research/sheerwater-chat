@@ -170,6 +170,7 @@ class SendMessageResponse(BaseModel):
     conversation_id: str
     response: str
     tool_calls: list[dict]
+    chart_urls: list[str] = []
     usage: dict | None = None
     rate_limit: dict | None = None
 
@@ -209,6 +210,7 @@ async def send_chat_message(request: Request, body: SendMessageRequest, user: di
         "assistant",
         result["content"],
         tool_calls=result["tool_calls"] if result["tool_calls"] else None,
+        chart_urls=result["chart_urls"] if result["chart_urls"] else None,
     )
 
     # Update conversation title if it's new
@@ -222,6 +224,7 @@ async def send_chat_message(request: Request, body: SendMessageRequest, user: di
         conversation_id=conversation_id,
         response=result["content"],
         tool_calls=result["tool_calls"],
+        chart_urls=result.get("chart_urls", []),
         usage=result.get("usage"),
         rate_limit=result.get("rate_limit"),
     )

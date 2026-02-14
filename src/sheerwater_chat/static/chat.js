@@ -181,7 +181,7 @@ form.addEventListener('submit', async (e) => {
 
         // Remove loading and add actual response
         loadingMsg.remove();
-        addMessage('assistant', data.response, false, data.tool_calls, data.usage);
+        addMessage('assistant', data.response, false, data.tool_calls, data.usage, data.chart_urls);
 
         // Update rate limit status bar
         if (data.rate_limit) {
@@ -199,7 +199,7 @@ form.addEventListener('submit', async (e) => {
 });
 
 // Add message to UI
-function addMessage(role, content, loading = false, toolCalls = null, usage = null) {
+function addMessage(role, content, loading = false, toolCalls = null, usage = null, chartUrls = null) {
     const div = document.createElement('div');
     div.className = `message ${role}` + (loading ? ' loading' : '');
 
@@ -211,6 +211,21 @@ function addMessage(role, content, loading = false, toolCalls = null, usage = nu
         contentDiv.innerHTML = renderMarkdown(content);
     }
     div.appendChild(contentDiv);
+
+    // Render chart iframes
+    if (chartUrls && chartUrls.length > 0) {
+        const chartContainer = document.createElement('div');
+        chartContainer.className = 'chart-container';
+        chartUrls.forEach(url => {
+            const iframe = document.createElement('iframe');
+            iframe.className = 'chart-iframe';
+            iframe.src = url;
+            iframe.sandbox = 'allow-scripts';
+            iframe.loading = 'lazy';
+            chartContainer.appendChild(iframe);
+        });
+        div.appendChild(chartContainer);
+    }
 
     if (toolCalls && toolCalls.length > 0) {
         const toolsDiv = document.createElement('div');

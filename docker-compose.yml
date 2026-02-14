@@ -2,6 +2,7 @@ services:
   keycloak:
     image: quay.io/keycloak/keycloak:25.0
     command: start-dev --import-realm
+    restart: unless-stopped
     environment:
       KEYCLOAK_ADMIN: admin
       KEYCLOAK_ADMIN_PASSWORD: admin
@@ -15,6 +16,7 @@ services:
     build:
       context: ../sheerwater
       dockerfile: mcp/Dockerfile
+    restart: unless-stopped
     ports:
       - "8000:8000"
     volumes:
@@ -23,10 +25,13 @@ services:
       - ~/.config/gcloud:/root/.config/gcloud:ro
     environment:
       GOOGLE_CLOUD_PROJECT: sheerwater
+      CHART_BUCKET_NAME: sheerwater-mcp-charts
+      SIGNING_SERVICE_ACCOUNT: ${SIGNING_SERVICE_ACCOUNT}
 
   sheerwater-chat:
     image: ghcr.io/rhiza-research/sheerwater-chat:latest
     build: .
+    restart: unless-stopped
     ports:
       - "8080:8080"
     volumes:

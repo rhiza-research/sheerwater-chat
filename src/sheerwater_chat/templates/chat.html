@@ -53,6 +53,13 @@
                 {% for msg in messages %}
                 <div class="message {{ msg.role }}">
                     <div class="message-content needs-render">{{ msg.content | e }}</div>
+                    {% if msg.chart_urls %}
+                    <div class="chart-container">
+                        {% for url in msg.chart_urls %}
+                        <iframe class="chart-iframe" src="{{ url }}" sandbox="allow-scripts" loading="lazy"></iframe>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
                     {% if msg.tool_calls %}
                     <div class="tool-calls">
                         {% for tc in msg.tool_calls %}
