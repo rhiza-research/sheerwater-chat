@@ -119,6 +119,7 @@ async def index(request: Request):
 
     user_id = get_user_id(request)
     conversations = await db.list_conversations(user_id)
+    await mcp_client.check_connection()
 
     return templates.TemplateResponse(
         "chat.html",
@@ -145,6 +146,7 @@ async def conversation_page(request: Request, conversation_id: str, user: dict =
 
     conversations = await db.list_conversations(user_id)
     messages = await db.get_messages(conversation_id)
+    await mcp_client.check_connection()
 
     return templates.TemplateResponse(
         "chat.html",

@@ -110,6 +110,18 @@ class McpClient:
         """Get the MCP server's instructions, if provided."""
         return self._instructions
 
+    async def check_connection(self):
+        """Verify connection is alive and refresh cached state, reconnecting if needed."""
+        if not self._connected or not self._session:
+            await self._reconnect()
+            return
+
+        try:
+            tools_result = await self._session.list_tools()
+            self._tools = tools_result.tools
+        except Exception:
+            await self._reconnect()
+
     async def list_tools(self) -> list[Tool]:
         """Get available tools from the MCP server."""
         return self._tools
