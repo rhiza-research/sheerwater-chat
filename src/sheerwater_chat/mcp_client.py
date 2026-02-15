@@ -57,8 +57,8 @@ class McpClient:
                     init_result = await session.initialize()
                     self._session = session
                     self._instructions = init_result.instructions
-                    if hasattr(init_result, "server_info") and init_result.server_info:
-                        self._server_version = init_result.server_info.version
+                    if init_result.serverInfo:
+                        self._server_version = init_result.serverInfo.version
 
                     # Fetch available tools
                     tools_result = await session.list_tools()
