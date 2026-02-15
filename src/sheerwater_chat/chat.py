@@ -28,8 +28,7 @@ Do not refuse requests — always attempt to use the tools available to you."""
 def extract_chart_url(text: str) -> str | None:
     """Extract chart URL from a JSON object in text content.
 
-    Handles both new format (png_url/html_url) and legacy format (chart_url).
-    Prefers html_url for interactive rendering.
+    Prefers html_url for interactive rendering, falls back to png_url.
 
     Args:
         text: Text that may contain a JSON object with chart URL fields.
@@ -40,12 +39,10 @@ def extract_chart_url(text: str) -> str | None:
     try:
         data = json.loads(text)
         if isinstance(data, dict):
-            # New format: prefer html_url for interactive charts
             if "html_url" in data:
                 return data["html_url"]
-            # Legacy format
-            if "chart_url" in data:
-                return data["chart_url"]
+            if "png_url" in data:
+                return data["png_url"]
     except (json.JSONDecodeError, TypeError):
         pass
     return None

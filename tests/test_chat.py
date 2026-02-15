@@ -16,9 +16,9 @@ class TestExtractChartUrl:
         text = '{"png_url": "https://example.com/chart.png", "html_url": "https://example.com/chart.html"}'
         assert extract_chart_url(text) == "https://example.com/chart.html"
 
-    def test_falls_back_to_chart_url(self):
-        text = '{"chart_url": "https://example.com/legacy.png"}'
-        assert extract_chart_url(text) == "https://example.com/legacy.png"
+    def test_falls_back_to_png_url(self):
+        text = '{"png_url": "https://example.com/chart.png"}'
+        assert extract_chart_url(text) == "https://example.com/chart.png"
 
     def test_returns_none_for_plain_text(self):
         assert extract_chart_url("just some text") is None
