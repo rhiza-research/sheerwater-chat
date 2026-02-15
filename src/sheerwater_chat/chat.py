@@ -12,6 +12,7 @@ from .mcp_client import McpClient
 
 logger = logging.getLogger(__name__)
 
+MAX_TOOL_ITERATIONS = 25
 DEFAULT_MODEL = "claude-sonnet-4-20250514"
 
 DEFAULT_SYSTEM_PROMPT = """\
@@ -128,7 +129,13 @@ class ChatService:
             total_input_tokens += response.usage.input_tokens
             total_output_tokens += response.usage.output_tokens
 
+        iteration = 0
         while response.stop_reason == "tool_use":
+            iteration += 1
+            if iteration > MAX_TOOL_ITERATIONS:
+                logger.warning(f"Tool loop exceeded {MAX_TOOL_ITERATIONS} iterations, breaking out")
+                break
+
             # Extract tool use blocks
             tool_use_blocks = [block for block in response.content if block.type == "tool_use"]
 
