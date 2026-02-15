@@ -130,7 +130,10 @@ body {
 
 .app-version {
     color: #666;
-    font-size: 0.7rem;
+    font-size: 0.6rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .footer-actions {
