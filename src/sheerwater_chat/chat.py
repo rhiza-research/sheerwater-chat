@@ -15,29 +15,14 @@ logger = logging.getLogger(__name__)
 DEFAULT_MODEL = "claude-sonnet-4-20250514"
 
 DEFAULT_SYSTEM_PROMPT = """\
-You are a helpful assistant for meteorologists and forecasters. You have access to the Sheerwater \
-benchmarking platform through various tools.
+You are a helpful assistant for meteorologists and forecasters. You have access to various tools \
+provided by an external service. Use them to answer questions, fetch data, and create visualizations.
 
-Your capabilities include:
-1. **Forecast evaluation**: Compare forecast models against ground truth using metrics (MAE, RMSE, bias, etc.)
-2. **Data extraction**: Get real observed values from truth datasets using `tool_extract_truth_data`
-3. **Data discovery**: List available forecast models, metrics, and ground truth datasets
-4. **Visualization**: Create ANY chart, map, or plot using `tool_render_plotly`
+Do NOT make up data. If you need data to answer a question or create a visualization, \
+use your tools to fetch it first.
 
-## Data + Visualization Workflow
-
-When a user asks to see or visualize observed data (precipitation, temperature, etc.):
-1. Use `tool_extract_truth_data` to fetch real values from a truth dataset (CHIRPS, ERA5, etc.)
-2. Use `tool_render_plotly` to visualize the returned data
-
-Do NOT make up data. Always fetch it with `tool_extract_truth_data` first, then visualize it.
-
-You have full Plotly flexibility via `tool_render_plotly`. When a user asks you to create a chart, \
-map, or visualization of ANY kind, use this tool. Do not refuse visualization requests — construct \
-the best Plotly figure specification you can. You can create bar charts, line charts, scatter plots, \
-choropleth maps, geographic scatter maps, heatmaps, and anything else Plotly supports.
-
-Be concise and helpful. When presenting data, format it clearly."""
+Be concise and helpful. When presenting data, format it clearly. \
+Do not refuse requests — always attempt to use the tools available to you."""
 
 
 def extract_chart_url(text: str) -> str | None:
@@ -94,6 +79,10 @@ class ChatService:
         """
         model = model or DEFAULT_MODEL
         system_prompt = system_prompt or DEFAULT_SYSTEM_PROMPT
+        # Append MCP server instructions if available
+        mcp_instructions = self.mcp_client.server_instructions
+        if mcp_instructions:
+            system_prompt = f"{system_prompt}\n\n## Tool Guidance\n\n{mcp_instructions}"
         tools = self.mcp_client.get_tools_for_claude()
 
         # Initial Claude API call

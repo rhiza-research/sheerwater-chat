@@ -24,6 +24,7 @@ class McpClient:
         self.server_url = server_url
         self._session: ClientSession | None = None
         self._tools: list[Tool] = []
+        self._instructions: str | None = None
         self._lock = asyncio.Lock()
         self._connected = False
 
@@ -53,8 +54,9 @@ class McpClient:
                     self._session_context = ClientSession(read_stream, write_stream)
                     session = await self._session_context.__aenter__()
 
-                    await session.initialize()
+                    init_result = await session.initialize()
                     self._session = session
+                    self._instructions = init_result.instructions
 
                     # Fetch available tools
                     tools_result = await session.list_tools()
@@ -89,9 +91,15 @@ class McpClient:
             self._session = None
             self._connected = False
             self._tools = []
+            self._instructions = None
 
         # Establish new connection
         await self._connect()
+
+    @property
+    def server_instructions(self) -> str | None:
+        """Get the MCP server's instructions, if provided."""
+        return self._instructions
 
     async def list_tools(self) -> list[Tool]:
         """Get available tools from the MCP server."""
