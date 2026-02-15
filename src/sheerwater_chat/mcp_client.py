@@ -5,7 +5,6 @@ import logging
 from contextlib import asynccontextmanager
 from typing import Any
 
-import httpx
 from mcp import ClientSession
 from mcp.client.sse import sse_client
 from mcp.types import Tool
@@ -68,9 +67,9 @@ class McpClient:
                     logger.info(f"Connected to MCP server, found {len(self._tools)} tools")
                     return
 
-                except httpx.ConnectError as e:
+                except Exception as e:
                     if attempt < MAX_CONNECT_RETRIES - 1:
-                        logger.warning(f"MCP server not ready, retrying in {RETRY_DELAY}s: {e}")
+                        logger.warning(f"MCP connect failed (attempt {attempt + 1}/{MAX_CONNECT_RETRIES}): {type(e).__name__}: {e}")
                         await asyncio.sleep(RETRY_DELAY)
                     else:
                         logger.error(f"Failed to connect to MCP server after {MAX_CONNECT_RETRIES} attempts")
@@ -81,14 +80,16 @@ class McpClient:
         logger.warning("Attempting to reconnect to MCP server...")
         async with self._lock:
             # Clean up old connection
+            # Catch BaseException because CancelledError (a BaseException in Python 3.12)
+            # can propagate from SSE context cleanup and corrupt the lifespan scope
             if self._session:
                 try:
                     await self._session_context.__aexit__(None, None, None)
-                except Exception:
+                except BaseException:
                     pass
                 try:
                     await self._sse_context.__aexit__(None, None, None)
-                except Exception:
+                except BaseException:
                     pass
 
             self._session = None
