@@ -154,7 +154,7 @@ body {
 .messages {
     flex: 1;
     overflow-y: auto;
-    padding: 1rem;
+    padding: 1rem 2rem;
 }
 
 .welcome {
@@ -169,8 +169,8 @@ body {
 }
 
 .message {
-    max-width: 800px;
-    margin: 0 auto 1rem;
+    max-width: 1200px;
+    margin: 0 0 1rem;
     padding: 1rem;
     border-radius: 8px;
 }
@@ -319,12 +319,11 @@ body {
 
 /* Input Area */
 .input-area {
-    padding: 1rem;
+    padding: 1rem 2rem;
     border-top: 1px solid #2a2a4a;
     display: flex;
     gap: 0.5rem;
-    max-width: 850px;
-    margin: 0 auto;
+    max-width: 1250px;
     width: 100%;
 }
 
@@ -578,7 +577,7 @@ body {
 
 .chart-iframe {
     width: 100%;
-    height: 450px;
+    aspect-ratio: 4 / 3;
     border: 1px solid #3a3a5a;
     border-radius: 6px;
     background: white;
