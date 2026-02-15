@@ -10,28 +10,22 @@ authors = [
 ]
 
 dependencies = [
-    "fastapi>=0.128.0",
-    "uvicorn[standard]>=0.40.0",
-    "httpx>=0.28.1",
-    "httpx-sse>=0.4.3",
-    "authlib>=1.6.6",
-    "itsdangerous>=2.2.0",
-    "python-multipart>=0.0.21",
-    "jinja2>=3.1.6",
-    "anthropic>=0.76.0",
-    "mcp>=1.25.0",
-    "databases[aiosqlite]>=0.9.0",
+    "fastapi",
+    "uvicorn[standard]",
+    "httpx",
+    "httpx-sse",
+    "authlib",
+    "itsdangerous",
+    "python-multipart",
+    "jinja2",
+    "anthropic",
+    "mcp",
+    "databases[aiosqlite]",
 ]
 
 [project.optional-dependencies]
 postgres = [
-    "databases[asyncpg]>=0.9.0",
-]
-dev = [
-    "pytest>=8.0.0",
-    "pytest-asyncio>=0.24.0",
-    "ruff>=0.8.0",
-    "pre-commit>=3.5.0",
+    "databases[asyncpg]",
 ]
 
 [project.scripts]
@@ -54,3 +48,12 @@ select = ["E", "F", "I", "N", "W", "UP"]
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
 testpaths = ["tests"]
+
+[dependency-groups]
+dev = [
+    "pytest",
+    "pytest-asyncio",
+    "pytest-mock",
+    "ruff",
+    "pre-commit",
+]

@@ -25,6 +25,7 @@ class McpClient:
         self._session: ClientSession | None = None
         self._tools: list[Tool] = []
         self._instructions: str | None = None
+        self._server_version: str | None = None
         self._lock = asyncio.Lock()
         self._connected = False
 
@@ -57,6 +58,8 @@ class McpClient:
                     init_result = await session.initialize()
                     self._session = session
                     self._instructions = init_result.instructions
+                    if hasattr(init_result, "server_info") and init_result.server_info:
+                        self._server_version = init_result.server_info.version
 
                     # Fetch available tools
                     tools_result = await session.list_tools()
@@ -92,9 +95,15 @@ class McpClient:
             self._connected = False
             self._tools = []
             self._instructions = None
+            self._server_version = None
 
         # Establish new connection
         await self._connect()
+
+    @property
+    def server_version(self) -> str | None:
+        """Get the MCP server's version, if provided."""
+        return self._server_version
 
     @property
     def server_instructions(self) -> str | None:

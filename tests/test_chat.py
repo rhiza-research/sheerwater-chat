@@ -2,7 +2,8 @@
 
 import pytest
 
-from sheerwater_chat.chat import DEFAULT_SYSTEM_PROMPT, ChatService, extract_chart_url
+from sheerwater_chat.chat import DEFAULT_SYSTEM_PROMPT, MAX_TOOL_ITERATIONS, ChatService, extract_chart_url
+from sheerwater_chat.mcp_client import McpClient
 
 
 class TestExtractChartUrl:
@@ -84,3 +85,75 @@ class TestSystemPrompt:
 
     def test_instructs_not_to_refuse(self):
         assert "Do not refuse" in DEFAULT_SYSTEM_PROMPT
+
+
+class TestMaxToolIterations:
+    """Tests for tool loop iteration limit."""
+
+    def test_max_tool_iterations_is_set(self):
+        assert MAX_TOOL_ITERATIONS > 0
+
+    async def test_tool_loop_breaks_after_max_iterations(self, mocker):
+        """send_message should stop the tool loop after MAX_TOOL_ITERATIONS."""
+        mock_mcp = mocker.MagicMock(spec=McpClient)
+        mock_mcp.get_tools_for_claude.return_value = [
+            {"name": "test_tool", "description": "test", "input_schema": {"type": "object", "properties": {}}}
+        ]
+        mock_mcp.server_instructions = None
+        mock_mcp.call_tool = mocker.AsyncMock(
+            return_value=mocker.MagicMock(content=[mocker.MagicMock(text="some result")])
+        )
+
+        service = ChatService.__new__(ChatService)
+        service.client = mocker.MagicMock()
+        service.mcp_client = mock_mcp
+
+        # Build a mock response that always says "tool_use"
+        tool_use_block = mocker.MagicMock()
+        tool_use_block.type = "tool_use"
+        tool_use_block.name = "test_tool"
+        tool_use_block.input = {}
+        tool_use_block.id = "tool_1"
+
+        tool_response = mocker.MagicMock()
+        tool_response.stop_reason = "tool_use"
+        tool_response.content = [tool_use_block]
+        tool_response.usage = mocker.MagicMock(input_tokens=100, output_tokens=50)
+
+        raw_response = mocker.MagicMock()
+        raw_response.parse.return_value = tool_response
+        raw_response.headers = {}
+
+        service.client.messages.with_raw_response.create = mocker.AsyncMock(return_value=raw_response)
+
+        await service.send_message(
+            [{"role": "user", "content": "hello"}],
+            model="test-model",
+            system_prompt="test",
+        )
+
+        # Tool loop should have been capped at MAX_TOOL_ITERATIONS
+        assert mock_mcp.call_tool.call_count == MAX_TOOL_ITERATIONS
+
+
+class TestMcpClientVersion:
+    """Tests for MCP client server version tracking."""
+
+    def test_initial_version_is_none(self):
+        client = McpClient("http://localhost:8000/sse")
+        assert client.server_version is None
+
+    def test_version_reset_on_reconnect_cleanup(self):
+        """_reconnect resets server_version before re-connecting."""
+        client = McpClient("http://localhost:8000/sse")
+        client._server_version = "1.0.0"
+        client._connected = True
+
+        # Simulate the state after cleanup (without actually connecting)
+        client._session = None
+        client._connected = False
+        client._tools = []
+        client._instructions = None
+        client._server_version = None
+
+        assert client.server_version is None

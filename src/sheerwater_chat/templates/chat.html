@@ -23,7 +23,7 @@
             <div class="sidebar-footer">
                 <div class="user-info">
                     <span class="user-name">{{ user_name }}</span>
-                    <span class="app-version">v{{ version }}</span>
+                    <span class="app-version">v{{ version }}{% if mcp_version %} | mcp {{ mcp_version }}{% endif %}</span>
                 </div>
                 <div class="footer-actions">
                     <button id="settings-btn" class="settings-btn" title="Settings">⚙</button>

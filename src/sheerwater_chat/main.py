@@ -129,6 +129,7 @@ async def index(request: Request):
             "current_conversation": None,
             "messages": [],
             "version": APP_VERSION,
+            "mcp_version": mcp_client.server_version,
         },
     )
 
@@ -154,6 +155,7 @@ async def conversation_page(request: Request, conversation_id: str, user: dict =
             "current_conversation": conversation,
             "messages": messages,
             "version": APP_VERSION,
+            "mcp_version": mcp_client.server_version,
         },
     )
 
