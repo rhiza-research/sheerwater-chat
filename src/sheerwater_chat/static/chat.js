@@ -326,3 +326,13 @@ settingsForm.addEventListener('submit', async (e) => {
         console.error('Failed to save settings:', e);
     }
 });
+
+// Auto-submit from ?q= query parameter
+const urlParams = new URLSearchParams(window.location.search);
+const autoQuery = urlParams.get('q');
+if (autoQuery && !conversationIdInput.value) {
+    // Clean the URL so refreshing doesn't re-submit
+    history.replaceState({}, '', '/');
+    input.value = autoQuery;
+    form.dispatchEvent(new Event('submit'));
+}
