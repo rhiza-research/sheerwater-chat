@@ -118,8 +118,8 @@ class McpClient:
                 logger.info(f"Tool {name} returned successfully")
                 return result
 
-            except (httpx.RemoteProtocolError, httpx.ReadError, httpx.ConnectError, EOFError, ConnectionError) as e:
-                logger.error(f"MCP connection error during tool call (attempt {attempt + 1}/{MAX_CALL_RETRIES}): {e}")
+            except Exception as e:
+                logger.error(f"MCP error during tool call (attempt {attempt + 1}/{MAX_CALL_RETRIES}): {type(e).__name__}: {e}")
 
                 if attempt < MAX_CALL_RETRIES - 1:
                     await self._reconnect()

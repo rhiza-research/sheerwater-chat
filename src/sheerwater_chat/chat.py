@@ -164,8 +164,8 @@ class ChatService:
                     else:
                         tool_result_content = str(result)
                 except Exception as e:
-                    logger.error(f"Tool {tool_name} failed: {e}")
-                    tool_result_content = f"Error: {str(e)}"
+                    logger.error(f"Tool {tool_name} failed: {type(e).__name__}: {e}")
+                    tool_result_content = f"Error: {type(e).__name__}: {e}"
 
                 tool_results.append(
                     {
