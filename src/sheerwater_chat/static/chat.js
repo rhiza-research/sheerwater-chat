@@ -128,13 +128,15 @@ document.querySelectorAll('.message-content.needs-render').forEach(el => {
 });
 
 // Auto-resize textarea
-input.addEventListener('input', () => {
-    input.style.height = 'auto';
-    input.style.height = Math.min(input.scrollHeight, 200) + 'px';
-});
+if (input) {
+    input.addEventListener('input', () => {
+        input.style.height = 'auto';
+        input.style.height = Math.min(input.scrollHeight, 200) + 'px';
+    });
+}
 
 // Handle form submission
-form.addEventListener('submit', async (e) => {
+if (form) form.addEventListener('submit', async (e) => {
     e.preventDefault();
 
     const message = input.value.trim();
@@ -266,12 +268,14 @@ newChatBtn.addEventListener('click', () => {
 });
 
 // Handle Enter key (submit) vs Shift+Enter (newline)
-input.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-        e.preventDefault();
-        form.dispatchEvent(new Event('submit'));
-    }
-});
+if (input) {
+    input.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            form.dispatchEvent(new Event('submit'));
+        }
+    });
+}
 
 // Settings modal
 const settingsBtn = document.getElementById('settings-btn');
@@ -328,11 +332,13 @@ settingsForm.addEventListener('submit', async (e) => {
 });
 
 // Auto-submit from ?q= query parameter
-const urlParams = new URLSearchParams(window.location.search);
-const autoQuery = urlParams.get('q');
-if (autoQuery && !conversationIdInput.value) {
-    // Clean the URL so refreshing doesn't re-submit
-    history.replaceState({}, '', '/');
-    input.value = autoQuery;
-    form.dispatchEvent(new Event('submit'));
+if (form) {
+    const urlParams = new URLSearchParams(window.location.search);
+    const autoQuery = urlParams.get('q');
+    if (autoQuery && !conversationIdInput.value) {
+        // Clean the URL so refreshing doesn't re-submit
+        history.replaceState({}, '', '/');
+        input.value = autoQuery;
+        form.dispatchEvent(new Event('submit'));
+    }
 }

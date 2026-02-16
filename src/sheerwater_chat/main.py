@@ -137,12 +137,17 @@ async def index(request: Request):
 
 @app.get("/c/{conversation_id}", response_class=HTMLResponse)
 async def conversation_page(request: Request, conversation_id: str, user: dict = Depends(require_auth)):
-    """View a specific conversation."""
+    """View a specific conversation (read-only if not owned by current user)."""
     user_id = get_user_id(request)
     conversation = await db.get_conversation(conversation_id, user_id)
+    readonly = False
 
     if not conversation:
-        raise HTTPException(status_code=404, detail="Conversation not found")
+        # Try loading as a shared read-only conversation
+        conversation = await db.get_conversation_by_id(conversation_id)
+        if not conversation:
+            raise HTTPException(status_code=404, detail="Conversation not found")
+        readonly = True
 
     conversations = await db.list_conversations(user_id)
     messages = await db.get_messages(conversation_id)
@@ -158,6 +163,7 @@ async def conversation_page(request: Request, conversation_id: str, user: dict =
             "messages": messages,
             "version": APP_VERSION,
             "mcp_version": mcp_client.server_version,
+            "readonly": readonly,
         },
     )
 
